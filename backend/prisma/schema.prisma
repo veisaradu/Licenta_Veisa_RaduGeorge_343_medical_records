@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  cnp              String   @unique
+  firstName        String?
+  lastName         String?
+  passwordHash     String
+  role             Role
+  rsaPublicKey     String
+  encryptedPrivKey String
+  pbkdf2Salt       String
+  createdAt        DateTime @default(now())
+
+  uploadedDocs     MedicalRecord[] @relation("Uploader")
+  ownedDocs        MedicalRecord[] @relation("Owner")
+  givenConsents    Consent[]       @relation("Patient")
+  receivedConsents Consent[]       @relation("Doctor")
+  auditLogs        AuditLog[]
+  doctorRequest    DoctorRequest?
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+model MedicalRecord {
+  id              String      @id @default(uuid())
+  ipfsCid         String
+  encryptedAesKey String
+  documentHash    String
+  category        DocCategory
+  txHash          String
+  fileName        String      @default("document")
+  uploadedById    String
+  ownerId         String
+  createdAt       DateTime    @default(now())
+
+  uploadedBy      User     @relation("Uploader", fields: [uploadedById], references: [id])
+  owner           User     @relation("Owner", fields: [ownerId], references: [id])
+}
+
+enum DocCategory {
+  ANALYSES
+  PRESCRIPTIONS
+  IMAGING
+  CONSULTATIONS
+}
+
+model Consent {
+  id        String      @id @default(uuid())
+  patientId String
+  doctorId  String
+  category  DocCategory
+  granted   Boolean     @default(true)
+  txHash    String
+  createdAt DateTime    @default(now())
+
+  patient   User        @relation("Patient", fields: [patientId], references: [id])
+  doctor    User        @relation("Doctor", fields: [doctorId], references: [id])
+
+  @@unique([patientId, doctorId, category])
+}
+
+model DoctorRequest {
+  id             String        @id @default(uuid())
+  userId         String        @unique
+  paraCode       String
+  specialization String
+  fullName       String
+  status         RequestStatus @default(PENDING)
+  adminNote      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String   // "VIEW", "UPLOAD", "CONSENT_GRANT", "CONSENT_REVOKE"
+  documentId String?
+  txHash     String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+}

@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: medapp
+      POSTGRES_PASSWORD: medapp_secret
+      POSTGRES_DB: medical_records
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
