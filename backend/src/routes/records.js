@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { ethers } = require('ethers');
 const prisma = require('../services/prisma');
 const auth = require('../middleware/auth');
 const role = require('../middleware/role');
@@ -32,7 +31,7 @@ router.post('/upload', auth, async (req, res) => {
     const categoryIndex = validCategories.indexOf(category);
     const recordId = `rec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-    const hashBytes32 = ethers.encodeBytes32String(documentHash.slice(0, 31));
+    const hashBytes32 = documentHash;
 
     const { medicalRecordsContract, signer } = getBlockchain();
     const deployerAddress = await signer.getAddress();

@@ -14,4 +14,9 @@ module.exports = {
       url: "http://127.0.0.1:8545",
     },
   },
+  gasReporter: {
+    enabled: true,
+    outputFile: "gas-report.txt",
+    noColors: true,
+  },
 };
